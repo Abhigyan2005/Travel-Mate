@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Travel - Travel Mate</title>
+    <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet" />
+    <style>
+      .hidden {
+        display: none;
+      }
+      .modal-content {
+        width: 35vw;
+        max-width: 500px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .messages-container {
+        max-height: 300px;
+        overflow-y: scroll;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .message {
+        margin-bottom: 10px;
+        padding: 5px;
+        border-radius: 5px;
+        background-color: #eee;
+      }
+
+      /* Styles for the Trip Details card */
+      .trip {
+        background-color: #6b46c1;
+        color: #d1d5db;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        flex-direction: column;
+        height: auto; /* Allow the card to adjust its height based on content */
+      }
+
+      /* Bold and top position for "Posted by" */
+      .trip-author {
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+
+      /* Trip details area with more space */
+      .trip-details {
+        max-height: 180px; /* Increase the height of the details container */
+        overflow-y: auto; /* Allow scrolling if content exceeds the max height */
+      }
+
+      .trip-details p {
+        margin: 5px 0;
+      }
+
+      /* Button Styles */
+      .chat-button {
+        background-color: #4299e1;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .chat-button:hover {
+        background-color: #3182ce;
+      }
+
+    </style>
+  </head>
+  <body class="bg-blue-100">
+    <!-- Navbar -->
+    <nav class="flex justify-between items-center p-4 bg-purple-950 text-white">
+        <div class="text-xl font-bold"><a href="{{ url_for('dashboard') }}">Travel Mate</a></div>
+        <!-- Updated Search Form -->
+      <div class="flex-grow mx-4 flex justify-center">
+        <form action="{{ url_for('travel') }}" method="GET" class="w-1/2">
+          <input type="text" name="search" placeholder="Search by location..." class="rounded-full border text-purple-800 border-gray-300 py-2 px-4 w-full" />
+          <button type="submit" class="hidden">Search</button>
+        </form>
+      </div>
+      <div class="relative">
+        <div class="cursor-pointer bg-purple-600 rounded-full p-2">
+          <img src="/static/svgs/notification.svg" alt="Notifications" />
+        </div>
+      </div>
+      <div>
+        <span class="cursor-pointer text-white ml-4"><a href="{{ url_for('travel') }}">Travel</a></span>
+      </div>
+      <div class="ml-4">
+        <span class="cursor-pointer text-white"><a href="{{ url_for('profile') }}">{{ current_user.username }}</a></span>
+      </div>
+    </nav>
+
+    <!-- Main Travel Layout -->
+    <div class="flex h-screen justify-center p-4">
+      <!-- Center Section for Displaying Trips -->
+      <div class="w-[80vw] h-full flex flex-col bg-white rounded-lg shadow p-4">
+        <h2 class="text-2xl font-bold mb-4">Explore Planned Trips</h2>
+
+        <!-- Displaying All Trips or Search Results -->
+        <div class="trip-list overflow-y-scroll h-[80vh]">
+          {% if trips %}
+            {% for trip in trips %}
+            <div class="trip bg-purple-600 text-purple-200 rounded-lg p-4 mb-4 flex justify-between items-start cursor-pointer" onclick="openChatModal({{ trip.id }})">
+              <!-- Displaying the username of the person who posted the trip -->
+              <div class="trip-author font-semibold text-white mb-2">
+                <span>Posted by: {{ trip.user.username }}</span>
+              </div>
+
+              <!-- Displaying Trip Details -->
+              <div class="trip-details">
+                <p><strong>Location:</strong> {{ trip.location }}</p>
+                <p><strong>Number of People:</strong> {{ trip.people }}</p>
+                <p><strong>Money Required:</strong> {{ trip.money_required }}</p>
+                <p><strong>Description:</strong> {{ trip.description }}</p>
+              </div>
+
+              <!-- Chat Button -->
+              <button class="chat-button">Chat</button>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p>No trips found.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+      <div class="modal-content p-4">
+        <h2 class="text-xl font-bold mb-4">Chat with Trip Creator</h2>
+        
+        <!-- Messages Display -->
+        <div id="messagesContainer" class="messages-container mb-4">
+          <!-- Messages will be dynamically added here -->
+        </div>
+
+        <!-- Message Form -->
+        <form id="messageForm" action="" method="POST">
+          <textarea name="message" id="messageInput" placeholder="Type your message..." class="border border-gray-300 rounded-lg p-2 w-full mb-2"></textarea>
+          <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-lg">Send</button>
+        </form>
+
+        <!-- Close Button -->
+        <button id="closeChatModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Close</button>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+      let currentTripId = null; // Track the current trip ID for chat modal
+
+      // Function to open chat modal and fetch messages for the selected trip
+      function openChatModal(tripId) {
+        currentTripId = tripId;
+        document.getElementById('chatModal').classList.remove('hidden');
+        fetchMessages(tripId);
+      }
+
+      // Function to fetch messages for a given trip
+      function fetchMessages(tripId) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        messagesContainer.innerHTML = '';  // Clear previous messages
+
+        fetch(`/message/${tripId}`)
+          .then(response => response.json())
+          .then(data => {
+            // Render messages dynamically
+            data.messages.forEach(message => {
+              const messageElement = document.createElement('div');
+              messageElement.classList.add('message');
+              messageElement.textContent = `${message.sender}: ${message.content}`;
+              messagesContainer.appendChild(messageElement);
+            });
+          });
+      }
+
+      // Function to handle the form submission and send messages
+      document.getElementById('messageForm').addEventListener('submit', function(e) {
+        e.preventDefault();  // Prevent the default form submission
+
+        const messageInput = document.getElementById('messageInput');
+        const messageContent = messageInput.value.trim();
+
+        if (messageContent === '') return;
+
+        // Send message via POST request
+        fetch(`/message/${currentTripId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `message=${messageContent}`
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            fetchMessages(currentTripId);  // Refresh messages
+            messageInput.value = '';  // Clear the input field
+          } else {
+            alert('Error sending message.');
+          }
+        });
+      });
+
+      // Close the chat modal
+      document.getElementById('closeChatModal').addEventListener('click', function() {
+        document.getElementById('chatModal').classList.add('hidden');
+      });
+    </script>
+  </body>
+</html>

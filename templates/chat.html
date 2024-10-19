@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat with {{ username }}</title>
+    <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet" />
+    <style>
+        .messages-container {
+            max-height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            background-color: #eee;
+        }
+        .message-input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        .send-button {
+            background-color: #4299e1;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .send-button:hover {
+            background-color: #3182ce;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-2xl font-bold mb-4">Chat with {{ username }}</h2>
+        
+        <!-- Messages Display -->
+        <div id="messagesContainer" class="messages-container">
+            <!-- Messages will be dynamically added here -->
+        </div>
+        
+        <!-- Message Input -->
+        <textarea id="messageInput" class="message-input" placeholder="Type your message..."></textarea>
+        <button id="sendMessageButton" class="send-button">Send</button>
+        
+        <!-- Back Button -->
+        <a href="{{ url_for('travel') }}" class="send-button" style="background-color: #6b46c1;">Back to Trips</a>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const tripId = {{ trip_id }};
+        const username = "{{ username }}";
+        
+        // Function to fetch messages for the given trip and user
+        function fetchMessages() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.innerHTML = ''; // Clear previous messages
+
+            fetch(`/chat/messages/${tripId}/${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.classList.add('message');
+                        messageElement.textContent = `${message.sender}: ${message.content}`;
+                        messagesContainer.appendChild(messageElement);
+                    });
+                });
+        }
+
+        // Fetch initial messages
+        fetchMessages();
+
+        // Send message
+        document.getElementById('sendMessageButton').addEventListener('click', function () {
+            const messageInput = document.getElementById('messageInput');
+            const messageContent = messageInput.value.trim();
+
+            if (messageContent === '') return;
+
+            fetch(`/chat/send/${tripId}/${username}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `message=${messageContent}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetchMessages();  // Refresh messages
+                    messageInput.value = '';  // Clear the input field
+                } else {
+                    alert('Error sending message.');
+                }
+            });
+        });
+
+        // Refresh messages every 5 seconds
+        setInterval(fetchMessages, 5000);
+    </script>
+</body>
+</html>

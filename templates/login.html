@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Mate</title>
+    <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-blue-200 flex items-center justify-center h-screen">
+    <div class="bg-purple-950 flex flex-col p-8 shadow-lg rounded-lg w-full max-w-md h-[520px]"> 
+        <span class="text-2xl font-bold text-white mb-2 text-center">Welcome Back!</span>
+        <span class="text-lg text-white mb-2 text-center">Login</span>
+        <span class="text-sm text-white text-center mb-8">Join the journey</span> 
+        
+        <form class="flex flex-col items-center space-y-4 flex-grow mt-5" action="{{ url_for('login') }}" method="post">
+            {{ form.hidden_tag() }}
+            <div class="flex flex-col w-full">
+                <label class="text-white mb-1" for="username">Username or Email</label>
+                {{ form.username(class="bg-white text-black rounded p-2 w-full", id="username") }}
+            </div>
+            <div class="flex flex-col w-full">
+                <label class="text-white mb-1" for="password">Password</label>
+                {{ form.password(class="bg-white text-black rounded p-2 w-full", id="password") }}
+            </div>
+            <div class="flex justify-center w-full">
+                {{ form.submit(class="bg-purple-200 text-purple-950 px-4 py-2 rounded cursor-pointer font-bold w-full") }}
+            </div>
+        </form>
+        
+        <a href="{{ url_for('register') }}" class="text-white text-sm text-center mt-4 cursor-pointer">
+            Don't have an account?
+        </a>
+    </div>
+</body>
+</html>

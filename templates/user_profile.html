@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ user.username }} - Travel Mate</title>
+  <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet">
+</head>
+<body class="bg-blue-100">
+
+  <!-- Navbar -->
+  <nav class="flex justify-between items-center p-4 bg-purple-950 text-white">
+    <div class="text-xl font-bold"><a href="{{ url_for('dashboard') }}">Travel Mate</a></div>
+    <div>
+      <span class="cursor-pointer text-white ml-4"><a href="{{ url_for('travel') }}">Travel</a></span>
+    </div>
+    <div class="ml-4">
+      <span class="cursor-pointer text-white"><a href="{{ url_for('profile') }}">{{ current_user.username }}</a></span>
+    </div>
+  </nav>
+
+  <!-- Main Profile Layout -->
+  <div class="flex h-screen justify-center p-4">
+    <!-- Left Section: User Profile -->
+    <div class="w-[35vw] bg-white rounded-lg shadow p-4">
+      <h2 class="text-2xl font-bold mb-4">{{ user.username }}'s Profile</h2>
+
+      <!-- Profile Picture (Default or Custom) -->
+      <div class="mb-4">
+        <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture_url) }}" alt="Profile Picture" class="w-32 h-32 rounded-full border-2 border-gray-300 mb-4">
+      </div>
+
+      <!-- User Information -->
+      <div class="mb-4">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email if user.email else 'Not available' }}</p>
+        <!-- Add more user info if needed -->
+      </div>
+
+      <!-- Add Friend Button -->
+      <form action="{{ url_for('add_friend', friend_id=user.id) }}" method="POST">
+        <button type="submit" class="bg-purple-600 text-white py-2 px-4 rounded-lg w-full">
+          Add as Friend
+        </button>
+      </form>
+
+    </div>
+
+    <!-- Right Section: User's Trip Planning (Optional) -->
+    <div class="w-[35vw] bg-white rounded-lg shadow p-4">
+      <h2 class="text-xl font-bold mb-4">Planned Trips</h2>
+
+      <div class="trip-list">
+        {% if user.trips %}
+          {% for trip in user.trips %}
+            <div class="trip bg-purple-600 text-purple-200 rounded-lg p-4 mb-4">
+              <p><strong>Location:</strong> {{ trip.location }}</p>
+              <p><strong>Number of People:</strong> {{ trip.people }}</p>
+              <p><strong>Money Required:</strong> {{ trip.money_required }}</p>
+              <p><strong>Description:</strong> {{ trip.description }}</p>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No trips planned yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional: Add a chat button or a link to open a chat -->
+  <div class="fixed bottom-10 right-10">
+    <a href="{{ url_for('chat_with_user', user_id=user.id) }}" class="bg-purple-600 text-white py-2 px-6 rounded-full">Chat</a>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+.hidden {
+    display: none !important;
+}
+
+.modal-width {
+    width: 35vw; 
+    max-width: 500px; 
+}
+
+
+

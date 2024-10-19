@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Travel Mate</title>
+    <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet" />
+    <link href="static/dashboard.css" rel="stylesheet" />
+  </head>
+  <body class="bg-blue-100">
+    <!-- Navbar -->
+    <nav class="flex justify-between items-center p-4 bg-purple-950 text-white">
+      <div class="text-xl font-bold"><a href="{{ url_for('dashboard') }}">Travel Mate</a></div>
+      <div class="flex-grow mx-4 flex justify-center">
+        <!-- Search Form -->
+        <form action="{{ url_for('dashboard') }}" method="GET" class="w-1/2">
+          <input type="text" name="search" placeholder="Search trips..." class="rounded-full border text-purple-800 border-gray-300 py-2 px-4 w-full" />
+          <button type="submit" class="hidden">Search</button>
+        </form>
+      </div>
+      <div class="relative">
+        <div class="cursor-pointer bg-purple-600 rounded-full p-2">
+          <img src="/static/svgs/notification.svg" alt="Notifications" />
+        </div>
+      </div>
+      <div>
+        <span class="cursor-pointer text-white ml-4"><a href="{{ url_for('travel') }}">Travel</a></span>
+      </div>
+      <div class="ml-4">
+        <span class="cursor-pointer text-white"><a href="{{ url_for('profile') }}">{{ current_user.username }}</a></span>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Layout -->
+    <div class="flex h-screen justify-between p-4">
+      <!-- Left Section with Friend List -->
+      <div class="bg-white rounded-lg shadow p-4 w-[23vw] h-full">
+        <h2 class="text-xl font-bold">Friends</h2>
+        <div class="friend-list mt-4">
+          {% if friends %}
+            {% for friend in friends %}
+              <div class="friend bg-gray-100 rounded-lg p-2 mb-2 flex items-center cursor-pointer">
+                <img src="/static/svgs/contact.svg" alt="{{ friend.username }}" class="w-10 h-10 rounded-full mr-3" />
+                <span class="text-gray-800">{{ friend.username }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No friends found.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Center Section for Creating Trip -->
+      <div class="w-[50vw] h-full flex flex-col">
+        <div class="bg-white rounded-lg shadow p-4">
+          <div class="flex flex-col mt-4">
+            <textarea class="rounded-lg border border-gray-300 bg-gray-100 p-1 h-13 resize-none" placeholder="What's on your mind?"></textarea>
+            <div class="flex items-center mt-2 justify-end">
+              <div class="cursor-pointer bg-purple-500 rounded-full p-2">
+                <img src="/static/svgs/upload.svg" alt="Upload" />
+              </div>
+              <button class="ml-2 bg-purple-200 text-purple-950 py-2 px-4 rounded-lg">Post</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Section for Trip Planning -->
+      <div class="bg-white rounded-lg shadow p-4 w-[23vw] h-full flex flex-col">
+        <button id="planYourTripBtn" class="bg-purple-600 text-white py-2 px-4 rounded-lg mb-4">Plan Your Trip</button>
+
+        <!-- Render trips dynamically -->
+        <div class="mt-4">
+          <h2 class="text-lg font-semibold">Planned Trips</h2>
+          <div class="trip-container">
+            {% if trips %}
+              {% for trip in trips %}
+                <!-- Updated this part to include the correct JavaScript call -->
+                <div class="trip bg-purple-600 text-purple-200 rounded-lg p-4 mb-2 cursor-pointer trip-card"
+                     data-trip-id="{{ trip.id }}">
+                  {{ trip.location }}
+                </div>
+              {% endfor %}
+            {% else %}
+              <p>No trips found matching your search.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for entering trip details -->
+    <div id="tripModal" class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+      <div class="modal-content w-[35vw] max-w-[500px] p-4 bg-white rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Enter Trip Details</h2>
+        <form id="tripDetailsForm" method="POST" action="/dashboard">
+          {{ form.hidden_tag() }}
+          <div class="mb-4">
+            {{ form.location.label(class="block text-sm font-semibold text-gray-700") }} {{ form.location(class="w-full border border-gray-300 rounded-lg p-2") }}
+          </div>
+          <div class="mb-4">
+            {{ form.people.label(class="block text-sm font-semibold text-gray-700") }} {{ form.people(class="w-full border border-gray-300 rounded-lg p-2") }}
+          </div>
+          <div class="mb-4">
+            {{ form.money_required.label(class="block text-sm font-semibold text-gray-700") }} {{ form.money_required(class="w-full border border-gray-300 rounded-lg p-2") }}
+          </div>
+          <div class="mb-4">
+            {{ form.description.label(class="block text-sm font-semibold text-gray-700") }} {{ form.description(class="w-full border border-gray-300 rounded-lg p-2") }}
+          </div>
+          <div class="flex justify-between items-center">
+            <button id="closeModalBtn" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Close</button>
+            <button type="submit" class="bg-purple-600 text-purple-100 py-2 px-6 rounded-lg">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal for displaying trip details -->
+    <div id="tripDetailsModal" class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+      <div class="modal-content w-[35vw] max-w-[500px] p-4 bg-white rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Trip Details</h2>
+        <p id="modal-location"></p>
+        <p id="modal-people"></p>
+        <p id="modal-money"></p>
+        <p id="modal-description"></p>
+        <form id="deleteForm" method="POST" action="" class="mt-4">
+          <button type="button" class="bg-red-600 text-white py-2 px-6 rounded-lg" onclick="deleteTrip()">Delete Trip</button>
+        </form>
+        <button id="closeTripDetailsModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Close</button>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/main.js"></script>
+  </body>
+</html>
