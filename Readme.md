@@ -1,6 +1,3 @@
 ```
-sqlite3 databse.db
-.tables
-SELECT * FROM user;
-
+Travel Buddy Finder web app in python flask
 ```
